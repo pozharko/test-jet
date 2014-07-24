@@ -1,1 +1,1 @@
-GET   /search          controllers.Search.search()
+GET   /search          controllers.Search.search(query: List[String])
