@@ -13,19 +13,12 @@ import scala.util.matching.Regex
  * @since 24.07.2014
  */
 class YandexRequest(query: String) {
-//    val holder : WSRequestHolder = WS.url("http://blogs.yandex.ru/search.rss").withQueryString("text" -> query)
-//    val rss : Future[Response] = holder.get()
+//  val holder: WSRequestHolder = WS.url("http://blogs.yandex.ru/search.rss").withQueryString("text" -> query)
+//  val rss: Future[Response] = holder.get()
+//  val links = rss
 
-  private val url = "http://blogs.yandex.ru/search.rss?text=" + query
-  private val links = (XML.load(url) \\ "item").map(x => (x \\ "link").text).toList
-  val domains = links.map(getSecondLevelDomain(_))
+    private val url = "http://blogs.yandex.ru/search.rss?text=" + query
+    val links = (XML.load(url) \\ "item").map(x => (x \\ "link").text).toList
 
-  // TODO parse only second level domain
-  private def getSecondLevelDomain(str: String) = {
-    new URL(str).getHost()
-//    val domain =  new URL(str).getHost()
-//    val pattern = "\.\\w\.\\w$".r
-//    pattern findFirstIn domain
-  }
 
 }
