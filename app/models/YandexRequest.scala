@@ -1,24 +1,32 @@
 package models
 
-import play.api.libs.ws._
-import play.api.libs.ws.WS.WSRequestHolder
-import scala.concurrent.Future
+import com.google.common.net.InternetDomainName
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 import scala.xml._
-import java.text.{SimpleDateFormat, ParseException}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
 import java.net.URL
-import scala.util.matching.Regex
 
 /**
  * @author Dmitry Meshkov
  * @since 24.07.2014
  */
-class YandexRequest(query: String) {
-//  val holder: WSRequestHolder = WS.url("http://blogs.yandex.ru/search.rss").withQueryString("text" -> query)
-//  val rss: Future[Response] = holder.get()
-//  val links = rss
+class YandexRequest(query: List[String]) {
+  private val awaitDuration = Duration(10, "s")
 
-    private val url = "http://blogs.yandex.ru/search.rss?text=" + query
-    val links = (XML.load(url) \\ "item").map(x => (x \\ "link").text).toList
+  private val urls = query map ("http://blogs.yandex.ru/search.rss?text=" + _)
+  private val futureRequests = urls map (url => Future {
+    (XML.load(url) \\ "item").map(x => (x \\ "link").text).toSet.take(10)
+  })
+  private val aggregated = Future.sequence(futureRequests)
+  private lazy val links = Await.result(aggregated, awaitDuration).flatten.distinct
 
+  private lazy val domains: List[String] = links map ({ x =>
+    val host = new URL(x).getHost
+    val domainName = InternetDomainName.from(host)
+    domainName.topPrivateDomain().toString
+  })
+  lazy val stats = domains map ((x: String) => (x, domains.count(_ == x))) toSet
 
 }

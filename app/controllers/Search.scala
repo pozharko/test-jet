@@ -1,27 +1,20 @@
 package controllers
 
-import play.api._
+import play.api.http.ContentTypes
+import play.api.libs.json.{Json, JsObject, JsNumber}
 import play.api.mvc._
 import models.YandexRequest
-import play.api.libs.ws._
-import play.api.libs.ws.WS.WSRequestHolder
-import scala.concurrent.{Await, Future}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.duration.Duration
 
 /**
  * Created by Dmitry Meshkov on 24.07.2014.
  */
 object Search extends Controller {
   def search(query: List[String]) = Action {
-    val futureRequests = query.map(x => Future {
-      new YandexRequest(x).links
-    })
+    val stats  = new YandexRequest(query).stats
+    val statsJs = stats map(x => x._1 -> JsNumber(x._2))
+    val json = JsObject(statsJs.toSet.toSeq.sortWith(_._1 < _._1))
 
-    val d2 = Duration(10, "s")
-    val res = futureRequests map { x => Await.result(x, d2)}
-    val domains = res.flatten.toSet
-    Ok(domains.toString())
+    Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
   }
 
 }
