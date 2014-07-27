@@ -1,11 +1,11 @@
 package models
 
 import com.google.common.net.InternetDomainName
+import scala.xml._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
-import scala.xml._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
+import scala.concurrent.ExecutionContext
+import java.util.concurrent.Executors
 import java.net.URL
 
 /**
@@ -14,6 +14,7 @@ import java.net.URL
  */
 class YandexRequest(query: List[String]) {
   private val awaitDuration = Duration(10, "s")
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
   private val urls = query map ("http://blogs.yandex.ru/search.rss?text=" + _)
   private val futureRequests = urls map (url => Future {
